@@ -3,6 +3,7 @@ package com.tareq.employee;
 import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -15,11 +16,13 @@ import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.opencsv.CSVReader;
@@ -44,6 +47,9 @@ public class ImportActivity extends AppCompatActivity {
 
     //file URI
     private Uri csvUri = null, zipUri = null;
+
+    private int successParsedInt = 0, totalRowInt = 0;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,20 +134,39 @@ public class ImportActivity extends AppCompatActivity {
             @Override
             public void run() {
                 //reading files using the URI found by file chooser
-                if (readZipFile(zipUri) && parseCSV(csvUri)) {
+                readZipFile(zipUri);
+                parseCSV(csvUri);
 
-                    //after successfully importing
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            csvPathEditText.setText("");
-                            zipPathEditText.setText("");
-                            dialog.dismiss();
-                        }
-                    });
-                }
+                //after successfully importing
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        csvPathEditText.setText("");
+                        zipPathEditText.setText("");
+                        dialog.dismiss();
+                        showParseLog();
+                    }
+                });
+
             }
         }).start();
+    }
+
+    //showing statistics of importing report
+    private void showParseLog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("From "+totalRowInt+" items, "+successParsedInt + " items successfully added.");
+        builder.setCancelable(true);
+        builder.setNeutralButton(android.R.string.ok,
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        ImportActivity.this.finish();
+                    }
+                });
+
+        AlertDialog alert11 = builder.create();
+        alert11.show();
+
     }
 
     //parsing zip file from uri
@@ -181,7 +206,7 @@ public class ImportActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(ImportActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(ImportActivity.this, "Error while reading zip file", Toast.LENGTH_LONG).show();
                 }
             });
             return false;
@@ -199,6 +224,9 @@ public class ImportActivity extends AppCompatActivity {
 
             //tracking row index
             int rowInt = 0;
+            successParsedInt = 0;
+
+
 
             //traversing all csv rows
             while ((nextLine = dataRead.readNext()) != null) {
@@ -239,7 +267,6 @@ public class ImportActivity extends AppCompatActivity {
                     //if not valid input, ignore entire row, delete the corresponding extracted image
                     deleteTempImageFile(rowInt);
                     continue;
-
                 }
 
                 //inserting the valid data and getting ID
@@ -259,7 +286,10 @@ public class ImportActivity extends AppCompatActivity {
                 }
                 File file1 = new File(saved + idStr + ".png");
                 file.renameTo(file1);
+
+                successParsedInt++;
             }
+            totalRowInt = rowInt;
             return true;
 
         } catch (final Exception e) {
@@ -267,7 +297,7 @@ public class ImportActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(ImportActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(ImportActivity.this, "Error while reading csv file", Toast.LENGTH_LONG).show();
                 }
             });
             return false;
@@ -325,7 +355,6 @@ public class ImportActivity extends AppCompatActivity {
                     Toast.makeText(ImportActivity.this, "Read permission is required to import the files", Toast.LENGTH_LONG).show();
                 }
                 break;
-
         }
     }
 
