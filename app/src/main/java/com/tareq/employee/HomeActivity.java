@@ -73,7 +73,7 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
         employeeRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         parentSwipeRefreshLayout = findViewById(R.id.parent_refresh_layout);
 
-        //swipe refreshlayout setup
+        //swipe refreshLayout setup
         parentSwipeRefreshLayout.setRefreshing(true);
 
         //recyclerview setup
@@ -90,6 +90,15 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
             @Override
             public void onClick(View v) {
                 gotoAddDataActivity();
+            }
+        });
+
+
+        parentSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                adapter.notifyDataSetChanged();
+                parentSwipeRefreshLayout.setRefreshing(false);
             }
         });
     }
@@ -147,7 +156,7 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
                         adapter.notifyDataSetChanged();
                         //turning of the refresh layout as well as lock it
                         parentSwipeRefreshLayout.setRefreshing(false);
-                        parentSwipeRefreshLayout.setEnabled(false);
+                        //parentSwipeRefreshLayout.setEnabled(false);
                     }
                 });
             }
@@ -211,11 +220,18 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            dialog.dismiss();
                             Toast.makeText(HomeActivity.this, "Exported to \\0\\EmployeeData", Toast.LENGTH_LONG).show();
                         }
                     });
                 }
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        dialog.dismiss();
+                    }
+                });
+
 
 
             }
@@ -226,7 +242,12 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
     private boolean exportDataToCSV(final File pathToSave) {
         //no data in the list, so return
         if (employeeList.isEmpty()) {
-            Toast.makeText(HomeActivity.this, "Nothing to export!", Toast.LENGTH_SHORT).show();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(HomeActivity.this, "Nothing to export!", Toast.LENGTH_SHORT).show();
+                }
+            });
             return false;
         }
 

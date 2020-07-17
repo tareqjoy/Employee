@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,9 +53,11 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHo
         //setting up the image view for each row
         String internalImageFileStr = EmployeeUtil.getInternalImagesPath(mContext) + item.getId() + ".png";
         File imageFile = new File(internalImageFileStr);
+
         if (imageFile.exists()) {
             //picasso library for loading image
             Picasso.get().load(imageFile).into(holder.profileImageView);
+            holder.profileImageView.invalidate();
         } else {
             holder.profileImageView.setImageDrawable(null);
         }

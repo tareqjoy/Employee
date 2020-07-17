@@ -289,6 +289,8 @@ public class ImportActivity extends AppCompatActivity {
 
                 successParsedInt++;
             }
+            //deleting
+            deleteUnresolvedTempImages();
             totalRowInt = rowInt;
             return true;
 
@@ -309,6 +311,19 @@ public class ImportActivity extends AppCompatActivity {
         String saved = EmployeeUtil.getInternalImagesPath(this);
         File file = new File(saved + "temp_" + rowInt + ".png");
         file.delete();
+    }
+
+    //if extra temp image file left, this method will clear them forcefully
+    private void deleteUnresolvedTempImages(){
+        String pathStr = EmployeeUtil.getInternalImagesPath(this);
+        File imageDirectoryFile = new File(pathStr);
+        File[] imageFileList = imageDirectoryFile.listFiles();
+        for(File imgFile:imageFileList){
+            String fileNameStr = imgFile.getName();
+            if(fileNameStr.startsWith("temp_")){
+                imgFile.delete();
+            }
+        }
     }
 
 
