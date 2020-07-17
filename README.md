@@ -1,7 +1,7 @@
 # Employee
 
 
-  <img src="/Imges/1.PNG"  title="one">
+  <img src="/Imges/1.PNG">
   <img src="/Imges/2.PNG">
   <img src="/Imges/3.PNG">
   <img src="/Imges/4.PNG" >
