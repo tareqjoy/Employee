@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Employee</string>
+    <string name="import_file">Import</string>
+    <string name="export_file">Export</string>
+    <string name="hint_name">Name</string>
+    <string name="hint_age">Age</string>
+    <string name="text_view_gender">Gender: </string>
+    <string name="radio_button_male">Male</string>
+    <string name="radio_button_female">Female</string>
+    <string name="button_cancel">Cancel</string>
+    <string name="button_save">Save</string>
+    <string name="button_choose">Choose</string>
+    <string name="button_import">Choose</string>
+    <string name="text_view_add_csv">Select CSV file for data:</string>
+    <string name="text_view_add_csv_desc">*must have 3 columns\n*column sequence must be: name, age, gender</string>
+    <string name="text_view_add_zip">Select Zip file for images:</string>
+    <string name="text_view_add_zip_desc">*image name should be corresponding row number of csv\n*valid image name ranges from 1 to total row\n*image must be in png format\n*image size should be smaller than 300kb</string>
+    <string name="text_view_age">Age: </string>
+
+</resources>
