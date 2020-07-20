@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.LoaderManager;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.app.ProgressDialog;
@@ -61,6 +62,11 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
 
     //request codes
     private final int REQ_EXT_READ = 1;
+    public static final int MODE_UPDATE = 1, MODE_DELETE = 2, MODE_COMPLETED = 3, MODE_SHOW_ALL = 4, MODE_INSERT=5;
+
+
+    private int indexToUpdate = -1, mode = MODE_SHOW_ALL;
+    private Employee newEmployeeData = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,6 +95,7 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
         employeeAddFloatingButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                mode=MODE_INSERT;
                 gotoAddDataActivity();
             }
         });
@@ -105,7 +112,7 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private void gotoAddDataActivity() {
         Intent i = new Intent(getBaseContext(), AddDataActivity.class);
-        startActivity(i);
+        startActivityForResult(i,MODE_INSERT);
     }
 
 
@@ -121,12 +128,35 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
     //called on each database update
     @Override
     public void onLoadFinished(@NonNull Loader<Cursor> loader, final Cursor data) {
-        employeeList.clear();
-        loadDataToRecyclerView(data);
+
+        if (mode == MODE_SHOW_ALL) {
+            employeeList.clear();
+            loadDataToRecyclerView(data);
+        } else if (mode == MODE_DELETE) {
+            employeeList.remove(indexToUpdate);
+            adapter.notifyItemRemoved(indexToUpdate);
+            adapter.notifyItemRangeChanged(indexToUpdate, adapter.getItemCount());
+            mode = MODE_COMPLETED;
+        } else {
+            //do nothing, wait for the child activity end, and it itself
+        }
+
+    }
+
+    public void notifyWillChange(int mode, int index) {
+        indexToUpdate = index;
+        this.mode = mode;
+    }
+
+    public void notifyWillChange(int mode) {
+        this.mode = mode;
     }
 
     //loading data to recycler view
     private void loadDataToRecyclerView(final Cursor data) {
+
+
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -215,7 +245,7 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
             @Override
             public void run() {
                 //if both operation is success
-                if(exportDataToCSV(pathToSave) && makeZip(pathToSave)){
+                if (exportDataToCSV(pathToSave) && makeZip(pathToSave)) {
                     //UI updating from the the other thread
                     runOnUiThread(new Runnable() {
                         @Override
@@ -231,7 +261,6 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
                         dialog.dismiss();
                     }
                 });
-
 
 
             }
@@ -300,7 +329,7 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
         File[] imageFileList = imageDirectoryFile.listFiles();
 
         //if no images in the directory, exit now
-        if(imageFileList.length==0){
+        if (imageFileList.length == 0) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -365,6 +394,42 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
                 exportData();
             } else {
                 Toast.makeText(HomeActivity.this, "Write Permission is required to export the data!", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+
+    private void updateNewData(Intent data) {
+        indexToUpdate = data.getIntExtra(AddDataActivity.TEXT_POSITION, -1);
+        int id = data.getIntExtra(AddDataActivity.TEXT_ID, -1);
+        String newName = data.getStringExtra(AddDataActivity.TEXT_NAME);
+        int newAge = data.getIntExtra(AddDataActivity.TEXT_AGE, -1);
+        int newGender = data.getIntExtra(AddDataActivity.TEXT_GENDER, -1);
+        Employee updatedEmp = new Employee(id, newName, newAge, newGender);
+
+        if(mode==MODE_UPDATE) {
+
+            employeeList.set(indexToUpdate, updatedEmp);
+            adapter.notifyItemChanged(indexToUpdate);
+        } else if(mode==MODE_INSERT){
+
+            employeeList.add(updatedEmp);
+            adapter.notifyItemInserted(employeeList.size());
+        }
+        mode=MODE_COMPLETED;
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // Collect data from the intent and use it
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == Activity.RESULT_OK) {
+            switch (requestCode) {
+                case MODE_INSERT:
+                case MODE_UPDATE:
+                    updateNewData(data);
+                    break;
             }
         }
     }

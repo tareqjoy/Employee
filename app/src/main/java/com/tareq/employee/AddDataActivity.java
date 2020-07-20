@@ -1,6 +1,7 @@
 package com.tareq.employee;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Context;
@@ -35,6 +36,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.io.ByteArrayOutputStream;
@@ -59,11 +61,12 @@ public class AddDataActivity extends AppCompatActivity {
     //request codes
     private final int REQ_EXT_READ = 1, PICK_FROM_FILE = 2;
     public final static int MODE_EDIT = 1, MODE_NEW = 2;
-    public final static String TEXT_MODE = "mode", TEXT_NAME = "name", TEXT_AGE = "age", TEXT_GENDER = "gender", TEXT_ID = "id";
+    public final static String TEXT_MODE = "mode", TEXT_NAME = "name", TEXT_AGE = "age", TEXT_GENDER = "gender",
+            TEXT_ID = "id", TEXT_POSITION="position";
 
     //variables for tracking the activity
     private int activityMode = MODE_NEW;
-    private int idInt = -1, ageInt = -1, genderInt = -1;
+    private int idInt = -1, ageInt = -1, genderInt = -1, positionInt=-1;
     private String nameStr = "";
 
 
@@ -85,10 +88,13 @@ public class AddDataActivity extends AppCompatActivity {
         cancelButton = findViewById(R.id.cancel_button);
         saveButton = findViewById(R.id.save_button);
 
+
+
         //bundle from the other activity, if the bundle is null, means the activity will act as adding new data (initially all field empty)
         //otherwise, it will act as updating old data (initially all field is filled)
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
+            saveButton.setEnabled(false);
             activityMode = extras.getInt(TEXT_MODE);
             nameStr = extras.getString(TEXT_NAME);
             ageInt = extras.getInt(TEXT_AGE);
@@ -96,8 +102,11 @@ public class AddDataActivity extends AppCompatActivity {
             idInt = extras.getInt(TEXT_ID);
             nameEditText.setText(nameStr);
             ageEditText.setText(String.valueOf(ageInt));
+            positionInt = extras.getInt(TEXT_POSITION,-1);
             ((RadioButton) genderRadioGroup.getChildAt(genderInt)).setChecked(true);
             showImageFromPath(String.valueOf(idInt));
+        } else {
+            makeSafeOperation();
         }
 
         //when the radio button is clicked the keyboard should be hidden
@@ -108,17 +117,7 @@ public class AddDataActivity extends AppCompatActivity {
             }
         });
 
-        //image picker will be shown on click and the keyboard must be hidden
-        profileImageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                hideKeyboard();
-                //check if the app has permission for reading external storage, if not then prompt request
-                if (EmployeeUtil.isPermissionGranted(AddDataActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE, REQ_EXT_READ)) {
-                    takePictureFromGallery();
-                }
-            }
-        });
+
 
         //cancel clicking button will show a confirm dialog
         cancelButton.setOnClickListener(new View.OnClickListener() {
@@ -170,6 +169,7 @@ public class AddDataActivity extends AppCompatActivity {
                 ageEditText.setError("Age must be a number");
                 return false;
             }
+
         }
 
         //no radio button is selected
@@ -220,6 +220,8 @@ public class AddDataActivity extends AppCompatActivity {
                     //saving the bitmap image with the name of the ID
                     saveImageFile(profileImageBitmap, idStr);
 
+                    idInt = Integer.valueOf(idStr);
+
                     //showing success message in UI thread
                     runOnUiThread(new Runnable() {
                         @Override
@@ -244,8 +246,15 @@ public class AddDataActivity extends AppCompatActivity {
                             Toast.makeText(AddDataActivity.this, "Data updated", Toast.LENGTH_LONG).show();
                         }
                     });
-                }
 
+                }
+                Intent intent = new Intent();
+                intent.putExtra(TEXT_POSITION, positionInt);
+                intent.putExtra(DatabaseOpenHelper.EMPLOYEE_ID,idInt);
+                intent.putExtra(DatabaseOpenHelper.EMPLOYEE_NAME,nameStr);
+                intent.putExtra(DatabaseOpenHelper.EMPLOYEE_AGE, Integer.parseInt(ageStr));
+                intent.putExtra(DatabaseOpenHelper.EMPLOYEE_GENDER, genderIndex);
+                setResult(RESULT_OK, intent);
                 //finish this activity after success
                 finish();
             }
@@ -302,11 +311,37 @@ public class AddDataActivity extends AppCompatActivity {
         File imageFile = new File(imageFilePathStr);
         if (imageFile.exists()) {
             //if the image exist in the directory
-            Picasso.get().load(imageFile).into(profileImageView);
-            profileImageBitmap = ((BitmapDrawable) profileImageView.getDrawable()).getBitmap();
+            Picasso.get().load(imageFile).into(profileImageView, new Callback() {
+                @Override
+                public void onSuccess() {
+                    makeSafeOperation();
+                    profileImageBitmap = ((BitmapDrawable) profileImageView.getDrawable()).getBitmap();
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    makeSafeOperation();
+                }
+            });
+
         } else {
             //Toast.makeText(AddDataActivity.this, "No image is found", Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void makeSafeOperation(){
+        //image picker will be shown on click and the keyboard must be hidden
+        profileImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                hideKeyboard();
+                //check if the app has permission for reading external storage, if not then prompt request
+                if (EmployeeUtil.isPermissionGranted(AddDataActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE, REQ_EXT_READ)) {
+                    takePictureFromGallery();
+                }
+            }
+        });
+        saveButton.setEnabled(true);
     }
 
     //invoked while user grants or rejects permission
@@ -369,6 +404,7 @@ public class AddDataActivity extends AppCompatActivity {
                             break;
                         case DialogInterface.BUTTON_NEGATIVE:
                             //if user press YES then the activity closes
+                            setResult(RESULT_CANCELED, null);
                             finish();
                             break;
                     }
@@ -384,6 +420,7 @@ public class AddDataActivity extends AppCompatActivity {
         } else {
             //no data is edited
             //user can finish the activity without showing dialog
+            setResult(RESULT_CANCELED, null);
             finish();
         }
     }
@@ -425,10 +462,12 @@ public class AddDataActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-            case PICK_FROM_FILE:
-                loadIntoImageView(data.getData());
-                break;
+        if(resultCode == Activity.RESULT_OK) {
+            switch (requestCode) {
+                case PICK_FROM_FILE:
+                    loadIntoImageView(data.getData());
+                    break;
+            }
         }
     }
 

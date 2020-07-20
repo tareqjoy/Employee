@@ -1,5 +1,6 @@
 package com.tareq.employee;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
@@ -12,11 +13,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.MemoryPolicy;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -42,7 +46,7 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHo
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
+    public void onBindViewHolder(ViewHolder holder, final int position) {
         final Employee item = items.get(position);
 
 
@@ -54,26 +58,32 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHo
         String internalImageFileStr = EmployeeUtil.getInternalImagesPath(mContext) + item.getId() + ".png";
         File imageFile = new File(internalImageFileStr);
 
+        Picasso.get().invalidate(imageFile);
+        Picasso.get().load(imageFile).into(holder.profileImageView);
+
+     //   Picasso.get().im.into(holder.profileImageView);
+        /*
         if (imageFile.exists()) {
+            Log.e("tareqjoy","updated "+position);
             //picasso library for loading image
-            Picasso.get().load(imageFile).into(holder.profileImageView);
+
             holder.profileImageView.invalidate();
         } else {
             holder.profileImageView.setImageDrawable(null);
-        }
+        }*/
 
         holder.parentCardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 //pop up menu
                 String[] options = {"Edit", "Delete"};
-                showPopUpMenu(options, item);
+                showPopUpMenu(options, position, item);
             }
         });
     }
 
     //showing pop up menu
-    private void showPopUpMenu(String[] options, final Employee item){
+    private void showPopUpMenu(String[] options,final int position, final Employee item){
         //setting up the dialog acting as menu
         AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
         builder.setTitle(item.getName());
@@ -85,11 +95,11 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHo
                 switch (which) {
                     case 0:
                         //Edit pressed
-                        gotoAddDataActivity(item);
+                        gotoAddDataActivity(position,item);
                         break;
                     case 1:
                         //Delete pressed
-                        showConfirmDialog(item);
+                        showConfirmDialog(position, item);
                         break;
                 }
             }
@@ -98,19 +108,21 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHo
     }
 
     //goto AddDataActivity for updating
-    private void gotoAddDataActivity(Employee item) {
+    private void gotoAddDataActivity(int position, Employee item) {
         //passing the information to the AddDataActivity
         Intent myIntent = new Intent(mContext, AddDataActivity.class);
         myIntent.putExtra(AddDataActivity.TEXT_MODE, AddDataActivity.MODE_EDIT);
+        myIntent.putExtra(AddDataActivity.TEXT_POSITION, position);
         myIntent.putExtra(AddDataActivity.TEXT_NAME, item.getName());
         myIntent.putExtra(AddDataActivity.TEXT_GENDER, item.getGender());
         myIntent.putExtra(AddDataActivity.TEXT_AGE, item.getAge());
         myIntent.putExtra(AddDataActivity.TEXT_ID, item.getId());
-        mContext.startActivity(myIntent);
+        ((HomeActivity)mContext).notifyWillChange(HomeActivity.MODE_UPDATE);
+        ((HomeActivity)mContext).startActivityForResult(myIntent,HomeActivity.MODE_UPDATE);
     }
 
     //showing confirm dialog for delete
-    private void showConfirmDialog(final Employee item) {
+    private void showConfirmDialog(final int position, final Employee item) {
         //setting up the callbacks
         DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
             @Override
@@ -121,7 +133,7 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHo
 
                     case DialogInterface.BUTTON_NEGATIVE:
                         //Yes pressed
-                        deleteItem(item);
+                        deleteItem(position, item);
                         break;
                 }
             }
@@ -135,15 +147,17 @@ public class EmployeeAdapter extends RecyclerView.Adapter<EmployeeAdapter.ViewHo
 
 
     //delete a item from database and also the image
-    private void deleteItem(Employee item){
+    private void deleteItem(int position, Employee item){
         String s = String.valueOf(item.getId());
         String[] ids = new String[]{s};
+        //items.remove(position);
 
         //deleting from database
         mContext.getContentResolver().delete(DatabaseContentProvider.CONTENT_URI, DatabaseOpenHelper.EMPLOYEE_ID + "=?", ids);
 
         //delete corresponding image
         EmployeeUtil.deleteInternalImage(mContext, item.getId());
+        ((HomeActivity)mContext).notifyWillChange(HomeActivity.MODE_DELETE, position);
     }
 
 
