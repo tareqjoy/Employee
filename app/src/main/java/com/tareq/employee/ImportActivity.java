@@ -282,6 +282,7 @@ public class ImportActivity extends AppCompatActivity {
                 //changing the temporary extracted image (temp_*.png) into normal image (*.png)
                 File file = new File(saved + "temp_" + rowInt + ".png");
                 if (!file.exists()) {
+                    getContentResolver().delete(DatabaseContentProvider.CONTENT_URI, DatabaseOpenHelper.EMPLOYEE_ID + "=?",new String[]{ idStr});
                     continue;
                 }
                 File file1 = new File(saved + idStr + ".png");
