@@ -62,7 +62,7 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
 
     //request codes
     private final int REQ_EXT_READ = 1;
-    public static final int MODE_UPDATE = 1, MODE_DELETE = 2, MODE_COMPLETED = 3, MODE_SHOW_ALL = 4, MODE_INSERT=5;
+    public static final int MODE_UPDATE = 1, MODE_DELETE = 2, MODE_COMPLETED = 3, MODE_SHOW_ALL = 4, MODE_INSERT=5, MODE_IMPORT=6;
 
 
     private int indexToUpdate = -1, mode = MODE_SHOW_ALL;
@@ -227,6 +227,7 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
     //showing the importing window
     private void gotoImportDataFromCSVActivity() {
         Intent i = new Intent(getBaseContext(), ImportActivity.class);
+        mode=MODE_SHOW_ALL;
         startActivity(i);
     }
 
