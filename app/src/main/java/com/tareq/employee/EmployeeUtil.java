@@ -2,6 +2,7 @@ package com.tareq.employee;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Environment;
 
@@ -83,5 +84,22 @@ public class EmployeeUtil {
             employeeDir.mkdirs();
         }
         return employeeDir.getPath();
+    }
+
+    /**
+     * Returns a scale down version of image
+     * @param realImage     the bitmap image to scale down
+     * @param maxImageSize  the maximum size of the image for both width & height
+     * @return              the scaled down bitmap image
+     */
+    public static Bitmap scaleDown(Bitmap realImage, float maxImageSize) {
+        float ratio = Math.min(
+                maxImageSize / realImage.getWidth(),
+                maxImageSize / realImage.getHeight());
+        int width = Math.round(ratio * realImage.getWidth());
+        int height = Math.round(ratio * realImage.getHeight());
+
+        Bitmap newBitmap = Bitmap.createScaledBitmap(realImage, width, height, true);
+        return newBitmap;
     }
 }

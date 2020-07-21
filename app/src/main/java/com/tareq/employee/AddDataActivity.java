@@ -62,13 +62,12 @@ public class AddDataActivity extends AppCompatActivity {
     private final int REQ_EXT_READ = 1, PICK_FROM_FILE = 2;
     public final static int MODE_EDIT = 1, MODE_NEW = 2;
     public final static String TEXT_MODE = "mode", TEXT_NAME = "name", TEXT_AGE = "age", TEXT_GENDER = "gender",
-            TEXT_ID = "id", TEXT_POSITION="position";
+            TEXT_ID = "id", TEXT_POSITION = "position";
 
     //variables for tracking the activity
     private int activityMode = MODE_NEW;
-    private int idInt = -1, ageInt = -1, genderInt = -1, positionInt=-1;
+    private int idInt = -1, ageInt = -1, genderInt = -1, positionInt = -1;
     private String nameStr = "";
-
 
 
     @Override
@@ -89,7 +88,6 @@ public class AddDataActivity extends AppCompatActivity {
         saveButton = findViewById(R.id.save_button);
 
 
-
         //bundle from the other activity, if the bundle is null, means the activity will act as adding new data (initially all field empty)
         //otherwise, it will act as updating old data (initially all field is filled)
         Bundle extras = getIntent().getExtras();
@@ -102,7 +100,7 @@ public class AddDataActivity extends AppCompatActivity {
             idInt = extras.getInt(TEXT_ID);
             nameEditText.setText(nameStr);
             ageEditText.setText(String.valueOf(ageInt));
-            positionInt = extras.getInt(TEXT_POSITION,-1);
+            positionInt = extras.getInt(TEXT_POSITION, -1);
             ((RadioButton) genderRadioGroup.getChildAt(genderInt)).setChecked(true);
             showImageFromPath(String.valueOf(idInt));
         } else {
@@ -116,7 +114,6 @@ public class AddDataActivity extends AppCompatActivity {
                 hideKeyboard();
             }
         });
-
 
 
         //cancel clicking button will show a confirm dialog
@@ -134,7 +131,7 @@ public class AddDataActivity extends AppCompatActivity {
             public void onClick(View v) {
                 hideKeyboard();
                 //if all inputs are okay
-                if(validInputs()) {
+                if (validInputs()) {
                     saveData();
                 }
             }
@@ -143,7 +140,7 @@ public class AddDataActivity extends AppCompatActivity {
     }
 
     //returns true if all inputs are correct
-    private boolean validInputs(){
+    private boolean validInputs() {
         //getting the input data
         final String nameStr = nameEditText.getText().toString();
         final String ageStr = ageEditText.getText().toString();
@@ -187,7 +184,7 @@ public class AddDataActivity extends AppCompatActivity {
     }
 
     //saving data, insert to database, copy image to internal
-    private void saveData(){
+    private void saveData() {
         //getting the input data
         final String nameStr = nameEditText.getText().toString();
         final String ageStr = ageEditText.getText().toString();
@@ -250,8 +247,8 @@ public class AddDataActivity extends AppCompatActivity {
                 }
                 Intent intent = new Intent();
                 intent.putExtra(TEXT_POSITION, positionInt);
-                intent.putExtra(DatabaseOpenHelper.EMPLOYEE_ID,idInt);
-                intent.putExtra(DatabaseOpenHelper.EMPLOYEE_NAME,nameStr);
+                intent.putExtra(DatabaseOpenHelper.EMPLOYEE_ID, idInt);
+                intent.putExtra(DatabaseOpenHelper.EMPLOYEE_NAME, nameStr);
                 intent.putExtra(DatabaseOpenHelper.EMPLOYEE_AGE, Integer.parseInt(ageStr));
                 intent.putExtra(DatabaseOpenHelper.EMPLOYEE_GENDER, genderIndex);
                 setResult(RESULT_OK, intent);
@@ -296,18 +293,18 @@ public class AddDataActivity extends AppCompatActivity {
     }
 
     //hides the soft keyboard
-    private void hideKeyboard(){
+    private void hideKeyboard() {
         //getting the current focus
         View view = AddDataActivity.this.getCurrentFocus();
         if (view != null) {
-            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
     }
 
     //loading image file into the image view
     private void showImageFromPath(String id) {
-        String imageFilePathStr = EmployeeUtil.getInternalImagesPath(AddDataActivity.this)+ id + ".png";
+        String imageFilePathStr = EmployeeUtil.getInternalImagesPath(AddDataActivity.this) + id + ".png";
         File imageFile = new File(imageFilePathStr);
         if (imageFile.exists()) {
             //if the image exist in the directory
@@ -329,7 +326,7 @@ public class AddDataActivity extends AppCompatActivity {
         }
     }
 
-    private void makeSafeOperation(){
+    private void makeSafeOperation() {
         //image picker will be shown on click and the keyboard must be hidden
         profileImageView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -338,6 +335,7 @@ public class AddDataActivity extends AppCompatActivity {
                 //check if the app has permission for reading external storage, if not then prompt request
                 if (EmployeeUtil.isPermissionGranted(AddDataActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE, REQ_EXT_READ)) {
                     takePictureFromGallery();
+
                 }
             }
         });
@@ -365,6 +363,7 @@ public class AddDataActivity extends AppCompatActivity {
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_FROM_FILE);
+        saveButton.setEnabled(false);
     }
 
     //checks if some input data is modified
@@ -425,7 +424,8 @@ public class AddDataActivity extends AppCompatActivity {
         }
     }
 
-    private void loadIntoImageView(final Uri selectedImageUri){
+
+    private void loadIntoImageView(final Uri selectedImageUri) {
         //loading image can be large task for large image, so thread is used
         new Thread(new Runnable() {
             @Override
@@ -438,6 +438,7 @@ public class AddDataActivity extends AppCompatActivity {
 
                     //showing the image
                     profileImageBitmap = BitmapFactory.decodeFileDescriptor(fileDescriptor);
+                    profileImageBitmap = EmployeeUtil.scaleDown(profileImageBitmap, 512);
 
                     //deinit the the file descriptor
                     parcelFileDescriptor.close();
@@ -450,7 +451,7 @@ public class AddDataActivity extends AppCompatActivity {
                         }
                     });
 
-                }  catch (Exception e) {
+                } catch (Exception e) {
                     ;
                 }
             }
@@ -462,13 +463,16 @@ public class AddDataActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode == Activity.RESULT_OK) {
-            switch (requestCode) {
-                case PICK_FROM_FILE:
+        switch (requestCode) {
+            case PICK_FROM_FILE:
+                if (resultCode == Activity.RESULT_OK) {
                     loadIntoImageView(data.getData());
-                    break;
-            }
+                }
+                saveButton.setEnabled(true);
+                break;
         }
+
+
     }
 
     //invoked while navigation back button is pressed

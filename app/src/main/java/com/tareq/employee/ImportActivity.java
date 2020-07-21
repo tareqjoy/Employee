@@ -226,8 +226,6 @@ public class ImportActivity extends AppCompatActivity {
             int rowInt = 0;
             successParsedInt = 0;
 
-
-
             //traversing all csv rows
             while ((nextLine = dataRead.readNext()) != null) {
 
