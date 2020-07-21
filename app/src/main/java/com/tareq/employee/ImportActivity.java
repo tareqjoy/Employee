@@ -198,6 +198,13 @@ public class ImportActivity extends AppCompatActivity {
                 //deinit the streams
                 zipInputStream.closeEntry();
                 fout.close();
+
+                Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+                bitmap = EmployeeUtil.scaleDown(bitmap,512);
+                FileOutputStream out = new FileOutputStream(file);
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+
+
             }
             zipInputStream.close();
             return true;

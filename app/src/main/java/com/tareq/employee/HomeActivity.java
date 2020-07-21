@@ -327,6 +327,7 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
         //getting all the available files in the internal directory image path
         String pathStr = EmployeeUtil.getInternalImagesPath(this);
         File imageDirectoryFile = new File(pathStr);
+        /*
         File[] imageFileList = imageDirectoryFile.listFiles();
 
         //if no images in the directory, exit now
@@ -338,7 +339,7 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
                 }
             });
             return false;
-        }
+        }*/
 
         //creating empty zip file in the directory
         String zipFileNameStr = EmployeeUtil.exportZipFileName;
@@ -356,8 +357,11 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
 
 
             //reading & writing each images
-            for (int i = 0; i < imageFileList.length; i++) {
-                FileInputStream fi = new FileInputStream(imageFileList[i]);
+          //  for (int i = 0; i < imageFileList.length; i++) {
+            int i=0;
+            for (Employee emp : employeeList) {
+                String fileNamePath =EmployeeUtil.getInternalImagesPath(HomeActivity.this)+emp.getId()+".png";
+                FileInputStream fi = new FileInputStream(fileNamePath);
                 origin = new BufferedInputStream(fi, BUFFER);
 
                 //zip name is the sequence number in the directory
@@ -369,6 +373,7 @@ public class HomeActivity extends AppCompatActivity implements LoaderManager.Loa
                     out.write(data, 0, count);
                 }
                 origin.close();
+                i++;
             }
             //deint the stream
             out.close();
